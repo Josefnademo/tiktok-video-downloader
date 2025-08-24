@@ -11,6 +11,7 @@ This app aims to **simplify the process of downloading TikTok content** directly
 It works locally on **PC (Windows/Linux/macOS via Electron)** and **Android (via React Native)**.
 
 ### Key Features
+
 - **Download TikTok videos** (local processing, quality options).
 - **Extract audio (MP3)** from videos.
 - **Save photo frames** from videos (or TikTok photo posts).
@@ -34,29 +35,39 @@ It works locally on **PC (Windows/Linux/macOS via Electron)** and **Android (via
 ## Modules Overview
 
 ### `downloader.js`
+
 Handles direct downloads:
+
 - Saves video or photo post files locally.
 - Supports resuming (Range headers).
 - Ensures unique filenames.
 
 ### `hlsParser.js`
+
 Parses `.m3u8` HLS playlists:
+
 - Detects multiple quality variants.
 - Lets users choose resolution/bitrate.
 - Returns direct stream URLs.
 
 ### `audioExtractor.js`
+
 Uses FFmpeg to:
+
 - Extract audio track (`.mp3`) from video.
 - Save in chosen folder.
 
 ### `frameExtractor.js`
+
 Uses FFmpeg to:
+
 - Split video into frames (`frame-%d.jpg`).
 - Extract specific photos (from TikTok "photo mode" posts).
 
 ### `utils.js`
+
 Helper functions:
+
 - Path management.
 - Filename generation.
 - Logging and error handling.
@@ -64,17 +75,17 @@ Helper functions:
 ---
 
 ## Installation
+
 ### 💻 Installation (Desktop)
+
     git clone https://github.com/YOURNAME/tiktok-downloader-app.git
     cd tiktok-downloader-app
     npm install
     npm start
 
 ### 📱 Installation (Android)
+
     git clone https://github.com/YOURNAME/tiktok-downloader-app.git
     cd tiktok-downloader-app/mobile
     npm install
     npm run android
-
-
-
