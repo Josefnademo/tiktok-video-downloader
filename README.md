@@ -63,10 +63,18 @@ Helper functions:
 
 ---
 
-## Installation (Desktop)
+## Installation
+### 💻 Installation (Desktop)
+    git clone https://github.com/YOURNAME/tiktok-downloader-app.git
+    cd tiktok-downloader-app
+    npm install
+    npm start
 
-```bash
-git clone https://github.com/YOURNAME/tiktok-downloader-app.git
-cd tiktok-downloader-app
-npm install
-npm start
+### 📱 Installation (Android)
+    git clone https://github.com/YOURNAME/tiktok-downloader-app.git
+    cd tiktok-downloader-app/mobile
+    npm install
+    npm run android
+
+
+
