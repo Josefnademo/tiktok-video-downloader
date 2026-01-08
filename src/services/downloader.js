@@ -4,21 +4,17 @@ import fetch from "node-fetch";
 import { app } from "electron";
 import { pipeline } from "node:stream/promises";
 
-// Saves files to Downloads/MediaDL folder
-const DOWNLOAD_DIR = path.join(app.getPath("downloads"), "MediaDL");
+export async function downloadFile({ url, filename, folder }) {
+  // Use custom folder OR default "Downloads/MediaDL"
+  const targetDir = folder || path.join(app.getPath("downloads"), "MediaDL");
 
-export async function downloadFile({ url, filename }) {
-  // Ensure folder exists
-  await fs.promises.mkdir(DOWNLOAD_DIR, { recursive: true });
+  await fs.promises.mkdir(targetDir, { recursive: true });
 
-  const finalPath = path.join(DOWNLOAD_DIR, filename);
-  console.log(`[Downloader] Starting download to: ${finalPath}`);
+  const finalPath = path.join(targetDir, filename);
 
-  // Fetch the file stream
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Download HTTP Error: ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
-  // Pipe data to file
   const fileStream = fs.createWriteStream(finalPath);
   await pipeline(res.body, fileStream);
 

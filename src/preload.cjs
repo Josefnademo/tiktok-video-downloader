@@ -12,9 +12,8 @@ contextBridge.exposeInMainWorld("api", {
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
-  // Request main process to download
-  downloadVideo: (url) => ipcRenderer.invoke("download-video", url),
-
-  // Request main process to convert to mp3
-  convertToMp3: (videoPath) => ipcRenderer.invoke("convert-mp3", videoPath),
+  downloadVideo: (opts) => ipcRenderer.invoke("download-video", opts),
+  convertToMp3: (path) => ipcRenderer.invoke("convert-mp3", path),
+  selectFolder: () => ipcRenderer.invoke("select-folder"), // New: Choose folder
+  openFolder: (path) => ipcRenderer.invoke("open-folder", path), // New: Open after download
 });
