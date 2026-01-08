@@ -12,9 +12,9 @@ contextBridge.exposeInMainWorld("api", {
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
-  // Sends a request to main process to download video
+  // Request main process to download
   downloadVideo: (url) => ipcRenderer.invoke("download-video", url),
 
-  // Sends a request to convert last video to mp3
+  // Request main process to convert to mp3
   convertToMp3: (videoPath) => ipcRenderer.invoke("convert-mp3", videoPath),
 });

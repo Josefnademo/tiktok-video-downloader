@@ -1,9 +1,8 @@
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import path from "node:path";
-import fs from "node:fs";
 
-// Fix for Electron packaging: Ensures ffmpeg binary path is correct
+// Fix Electron path issue for ffmpeg binary
 const fixedFfmpegPath = ffmpegPath.replace("app.asar", "app.asar.unpacked");
 ffmpeg.setFfmpegPath(fixedFfmpegPath);
 

@@ -3,26 +3,31 @@
   <body
     style="font-family: monospace; padding: 20px; background: #222; color: #fff"
   >
-    <h2>Media Downloader (Debug Mode)</h2>
+    <h2>Media Downloader</h2>
 
-    <input
-      type="text"
-      id="urlInput"
-      placeholder="TikTok Link..."
-      style="width: 70%; padding: 8px"
-    />
-    <button id="downloadBtn" style="padding: 8px">Download</button>
+    <div style="margin-bottom: 10px">
+      <input
+        type="text"
+        id="urlInput"
+        placeholder="Paste TikTok URL here..."
+        style="width: 70%; padding: 8px"
+      />
+      <button id="downloadBtn" style="padding: 8px; cursor: pointer">
+        Download
+      </button>
+    </div>
 
     <div
       id="status"
       style="
-        margin-top: 20px;
         white-space: pre-wrap;
         border: 1px solid #444;
         padding: 10px;
+        background: #111;
+        min-height: 100px;
       "
     >
-      Waiting...
+      Ready...
     </div>
 
     <script>
@@ -31,27 +36,27 @@
 
       function log(msg) {
         statusDiv.textContent += "\n" + msg;
-        console.log(msg); // Also logs to DevTools console
+        console.log(msg);
       }
 
       btn.onclick = async () => {
         const url = document.getElementById("urlInput").value.trim();
-        if (!url) return;
+        if (!url) return alert("Please enter a URL");
 
         statusDiv.textContent = "Processing...";
         btn.disabled = true;
 
         try {
-          // Call the API
+          // Call backend
           const result = await window.api.downloadVideo(url);
 
           if (result.success) {
-            log(`✅ DONE! File saved:\n${result.path}`);
+            log(`✅ SUCCESS!\nFile saved at: ${result.path}`);
           } else {
-            log(`❌ ERROR:\n${result.error}`);
+            log(`❌ ERROR: ${result.error}`);
           }
         } catch (e) {
-          log(`❌ CRITICAL UI ERROR: ${e.message}`);
+          log(`❌ SYSTEM ERROR: ${e.message}`);
         }
 
         btn.disabled = false;
