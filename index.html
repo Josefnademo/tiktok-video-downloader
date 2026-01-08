@@ -1,86 +1,61 @@
 <!DOCTYPE html>
-<html>
-  <body style="font-family: sans-serif; padding: 16px">
-    <h2>Media Downloader (локальный)</h2>
+<html lang="en">
+  <body
+    style="font-family: monospace; padding: 20px; background: #222; color: #fff"
+  >
+    <h2>Media Downloader (Debug Mode)</h2>
+
     <input
-      id="url"
-      placeholder="Ссылка MP4/HLS или TikTok"
-      style="width: 80%"
+      type="text"
+      id="urlInput"
+      placeholder="TikTok Link..."
+      style="width: 70%; padding: 8px"
     />
-    <button id="probe">Показать варианты</button>
-    <div id="variants" style="margin: 8px 0"></div>
-    <button id="download">Скачать файл</button>
-    <button id="to-mp3">Извлечь MP3</button>
-    <button id="frames">Кадры из видео</button>
-    <pre id="log" style="margin-top: 12px; white-space: pre-wrap"></pre>
+    <button id="downloadBtn" style="padding: 8px">Download</button>
+
+    <div
+      id="status"
+      style="
+        margin-top: 20px;
+        white-space: pre-wrap;
+        border: 1px solid #444;
+        padding: 10px;
+      "
+    >
+      Waiting...
+    </div>
 
     <script>
-      const log = (m) =>
-        (document.getElementById("log").textContent += m + "\n");
+      const statusDiv = document.getElementById("status");
+      const btn = document.getElementById("downloadBtn");
 
-      document.getElementById("probe").onclick = async () => {
-        const u = document.getElementById("url").value.trim();
-        if (!u) return;
-        if (u.endsWith(".m3u8")) {
-          const v = await window.api.listHlsVariants(u);
-          document.getElementById("variants").innerHTML = v
-            .map(
-              (x) =>
-                `<label><input type="radio" name="v" value="${x.url}"> ${x.resolution} (${x.bandwidth})</label>`
-            )
-            .join("<br>");
-        } else {
-          document.getElementById("variants").innerHTML =
-            "Прямая ссылка на файл (MP4/WEBM/TikTok)";
-        }
-      };
+      function log(msg) {
+        statusDiv.textContent += "\n" + msg;
+        console.log(msg); // Also logs to DevTools console
+      }
 
-      document.getElementById("download").onclick = async () => {
+      btn.onclick = async () => {
+        const url = document.getElementById("urlInput").value.trim();
+        if (!url) return;
+
+        statusDiv.textContent = "Processing...";
+        btn.disabled = true;
+
         try {
-          let u = document.getElementById("url").value.trim();
-          if (!u) return;
-          const sel = document.querySelector("input[name=v]:checked");
-          if (sel) u = sel.value;
-          const out = await window.api.downloadFile({
-            url: u,
-            outfile: guess(u),
-          });
-          log("Saved: " + out);
+          // Call the API
+          const result = await window.api.downloadVideo(url);
+
+          if (result.success) {
+            log(`✅ DONE! File saved:\n${result.path}`);
+          } else {
+            log(`❌ ERROR:\n${result.error}`);
+          }
         } catch (e) {
-          log("Error: " + e.message);
+          log(`❌ CRITICAL UI ERROR: ${e.message}`);
         }
+
+        btn.disabled = false;
       };
-
-      document.getElementById("to-mp3").onclick = async () => {
-        const last = lastSaved();
-        if (!last) return log("Сначала скачайте видео.");
-        const mp3 = await window.api.extractAudioMp3({ videoPath: last });
-        log("MP3: " + mp3);
-      };
-
-      document.getElementById("frames").onclick = async () => {
-        const last = lastSaved();
-        if (!last) return log("Сначала скачайте видео.");
-        const dir = await window.api.extractFrames({ videoPath: last, fps: 1 });
-        log("Frames dir: " + dir);
-      };
-
-      function guess(u) {
-        try {
-          const p = new URL(u);
-          const name = p.pathname.split("/").pop() || "video.mp4";
-          return name.split("?")[0];
-        } catch {
-          return "video.mp4";
-        }
-      }
-
-      function lastSaved() {
-        const m = document
-          .getElementById("log")
-          .textContent.match(/Saved:\s(.+)$/m);
-        return m && m[1];
-      }
     </script>
   </body>
 </html>
