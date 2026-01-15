@@ -32,10 +32,10 @@ function Write-Log {
     
     $timestamp = Get-Date -Format "HH:mm:ss"
     $icon = @{
-        Success = "✅"
-        Error   = "❌"
-        Warning = "⚠️"
-        Info    = "ℹ️"
+        Success = "[OK]"
+        Error   = "[ERROR]"
+        Warning = "[WARNING]"
+        Info    = "[INFO]"
     }
     
     Write-Host "[$timestamp] $($icon[$Level]) $Message" -ForegroundColor $Colors[$Level]

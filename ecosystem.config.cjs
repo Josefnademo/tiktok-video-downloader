@@ -16,8 +16,8 @@ module.exports = {
       // Auto-restart if process crashes
       max_memory_restart: "500M",
       // Logs configuration
-      error_file: "logs/err.log",
-      out_file: "logs/out.log",
+      error_file: "./logs/err.log",
+      out_file: "./logs/out.log",
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       // Auto-start on server reboot
       autorestart: true,
