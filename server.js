@@ -75,21 +75,33 @@ app.post("/api/download", async (req, res) => {
       videoData.qualities[qualityIndex || 0] || videoData.qualities[0];
     console.log(`[API] Quality: ${selectedQuality.label}`);
 
-    // 4. Download with rate limiter
+    // 4. Download video file directly (stream to client)
     const filename = `tiktok_${videoData.id}_${selectedQuality.id}.mp4`;
 
-    const savedPath = await limiter.schedule(() =>
-      downloadFile({
-        url: selectedQuality.url,
-        filename: filename,
-        folder: customFolder,
-      })
-    );
+    // Fetch the video from TikTok URL
+    const fetch_module = (await import("node-fetch")).default;
+    const videoResponse = await fetch_module(selectedQuality.url);
+
+    if (!videoResponse.ok) {
+      throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
+    }
+
+    // Set response headers for file download
+    res.setHeader("Content-Type", "video/mp4");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+    // Stream the video directly to the client
+    await new Promise((resolve, reject) => {
+      videoResponse.body.pipe(res);
+      videoResponse.body.on("error", reject);
+      res.on("finish", resolve);
+      res.on("error", reject);
+    });
 
     // Update last ID only on success
     lastDownloadedId = videoData.id;
 
-    res.json({ success: true, path: savedPath, title: videoData.desc });
+    console.log(`[API] Video streamed successfully: ${filename}`);
   } catch (error) {
     console.error("[API] Error:", error.message);
     res.status(500).json({ success: false, error: error.message });

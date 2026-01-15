@@ -96,3 +96,30 @@ pm2 status
 - [github [Xlinka TikTok-Downloader C#]:](https://github.com/Xlinka/TikTok-Downloader?tab=readme-ov-file)
 - Old api: https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/play/?video_id=...
 - [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+
+## Deployment on Railway
+
+### Requirements
+
+- GitHub account
+- Railway account (free tier available)
+
+### Steps
+
+1. Go to [railway.app](https://railway.app)
+2. Click "New Project" → "Deploy from GitHub"
+3. Select `tiktok-video-downloader` repository
+4. Railway auto-detects Node.js and deploys
+5. In Railway Dashboard → Environment Variables:
+   - Add `API_TOKEN=your_secure_token`
+   - Add `PORT=3000` (optional, Railway sets this automatically)
+6. Deploy automatically starts
+7. Your app URL: `https://your-project-name.railway.app`
+
+### Features for Railway deployment
+
+- Video is streamed directly to browser (no file storage needed)
+- Automatic SSL/HTTPS
+- Auto-restart on crashes
+- GitHub auto-deploy (push to main = instant deploy)
+- Free tier: $5/month credits

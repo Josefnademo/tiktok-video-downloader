@@ -232,24 +232,38 @@
       const API_TOKEN = "my_strong_token"; // Set via environment variable
       const API_URL = "http://localhost:3000";
 
+      // Hide Electron-only features in browser
+      if (!isElectron) {
+        if (els.browse) els.browse.style.display = "none";
+        if (els.folder) els.folder.style.display = "none";
+
+        // Hide the label for folder path
+        const folderLabel = document.querySelector(
+          ".input-group:has(#folderPath) > label"
+        );
+        if (folderLabel) folderLabel.style.display = "none";
+      }
+
       // 1. Browse Folder
-      els.browse.onclick = async () => {
-        if (isElectron) {
-          // Electron: Use native dialog
-          const path = await window.api.selectFolder();
-          if (path) {
-            selectedFolder = path;
-            els.folder.value = path;
+      if (els.browse) {
+        els.browse.onclick = async () => {
+          if (isElectron) {
+            // Electron: Use native dialog
+            const path = await window.api.selectFolder();
+            if (path) {
+              selectedFolder = path;
+              els.folder.value = path;
+            }
+          } else {
+            // Browser: Just show a text field message
+            showStatus(
+              "In browser mode, files save to Downloads/MediaDL folder",
+              "info"
+            );
+            selectedFolder = null;
           }
-        } else {
-          // Browser: Just show a text field message
-          showStatus(
-            "In browser mode, files save to Downloads/MediaDL folder",
-            "info"
-          );
-          selectedFolder = null;
-        }
-      };
+        };
+      }
 
       // 2. Download Logic
       els.btn.onclick = async () => {
@@ -272,7 +286,7 @@
               customFolder: selectedFolder,
             });
           } else {
-            // Browser: Use HTTP API
+            // Browser: Use HTTP API with streaming download
             const response = await fetch(`${API_URL}/api/download`, {
               method: "POST",
               headers: {
@@ -287,19 +301,52 @@
             });
 
             if (!response.ok) {
-              throw new Error(`Server error: ${response.statusText}`);
+              const error = await response.json();
+              throw new Error(error.error || response.statusText);
             }
 
-            result = await response.json();
+            // Check if it's a video stream or JSON response
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("video")) {
+              // It's a video file - stream it to user's download
+              const blob = await response.blob();
+              const filename =
+                response.headers
+                  .get("content-disposition")
+                  .split("filename=")[1]
+                  .replace(/"/g, "") || "tiktok-video.mp4";
+
+              // Create download link
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = downloadUrl;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(downloadUrl);
+              document.body.removeChild(a);
+
+              result = {
+                success: true,
+                title: filename,
+                path: filename,
+              };
+            } else {
+              // It's JSON
+              result = await response.json();
+            }
           }
 
-          if (result.success) {
+          if (result && result.success) {
             showStatus(`Downloaded: ${result.title}`, "success");
             lastFilePath = result.path;
-            els.actions.style.display = "flex";
+            // Show action buttons only in Electron
+            if (isElectron) {
+              els.actions.style.display = "flex";
+            }
             els.url.value = "";
           } else {
-            showStatus(`Error: ${result.error}`, "error");
+            showStatus(`Error: ${result?.error || "Unknown error"}`, "error");
           }
         } catch (e) {
           showStatus(`System Error: ${e.message}`, "error");
@@ -308,41 +355,33 @@
         els.btn.disabled = false;
       };
 
-      // 3. Open Folder
+      // 3. Open Folder (Electron only)
       els.openBtn.onclick = () => {
         if (isElectron && lastFilePath) {
           window.api.openFolder(lastFilePath);
         } else {
-          showStatus("File saved to Downloads/MediaDL", "info");
+          showStatus(
+            "This feature is only available in the Electron app",
+            "info"
+          );
         }
       };
 
-      // 4. Convert MP3
+      // 4. Convert MP3 (Electron only)
       els.mp3Btn.onclick = async () => {
+        if (!isElectron) {
+          showStatus(
+            "MP3 conversion is only available in the Electron app",
+            "info"
+          );
+          return;
+        }
+
         if (!lastFilePath) return;
         els.mp3Btn.textContent = "Converting...";
 
         try {
-          let res;
-
-          if (isElectron) {
-            res = await window.api.convertToMp3(lastFilePath);
-          } else {
-            const response = await fetch(`${API_URL}/api/convert-mp3`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-api-token": API_TOKEN,
-              },
-              body: JSON.stringify({ videoPath: lastFilePath }),
-            });
-
-            if (!response.ok) {
-              throw new Error(`Server error: ${response.statusText}`);
-            }
-
-            res = await response.json();
-          }
+          const res = await window.api.convertToMp3(lastFilePath);
 
           if (res.success) {
             showStatus("MP3 Extracted successfully!", "success");
