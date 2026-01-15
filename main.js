@@ -25,8 +25,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Register IPC handlers BEFORE creating window
+  setupHandlers();
   createWindow();
-  setupHandlers(); // Register IPC events
   console.log("✅ App started. Ready to process requests.");
 });
 

@@ -27,7 +27,7 @@ export function setupHandlers() {
       try {
         console.log(`[IPC] Processing: ${url}`);
 
-        // 1. Get Info
+        // 1. Get Info - direct function call
         const videoData = await getVideoInfo(url);
 
         // 2. Anti-Spam Check

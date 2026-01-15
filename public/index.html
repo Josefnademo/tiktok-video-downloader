@@ -224,15 +224,30 @@
         mp3Btn: document.getElementById("mp3Btn"),
       };
 
-      let selectedFolder = null; // Store actual path
+      let selectedFolder = null;
       let lastFilePath = null;
+
+      // Detect environment: Electron or Browser
+      const isElectron = typeof window !== "undefined" && window.api;
+      const API_TOKEN = "my_strong_token"; // Set via environment variable
+      const API_URL = "http://localhost:3000";
 
       // 1. Browse Folder
       els.browse.onclick = async () => {
-        const path = await window.api.selectFolder();
-        if (path) {
-          selectedFolder = path;
-          els.folder.value = path;
+        if (isElectron) {
+          // Electron: Use native dialog
+          const path = await window.api.selectFolder();
+          if (path) {
+            selectedFolder = path;
+            els.folder.value = path;
+          }
+        } else {
+          // Browser: Just show a text field message
+          showStatus(
+            "In browser mode, files save to Downloads/MediaDL folder",
+            "info"
+          );
+          selectedFolder = null;
         }
       };
 
@@ -247,17 +262,42 @@
         els.actions.style.display = "none";
 
         try {
-          const result = await window.api.downloadVideo({
-            url: url,
-            qualityIndex: parseInt(els.quality.value),
-            customFolder: selectedFolder,
-          });
+          let result;
+
+          if (isElectron) {
+            // Electron: Use IPC
+            result = await window.api.downloadVideo({
+              url: url,
+              qualityIndex: parseInt(els.quality.value),
+              customFolder: selectedFolder,
+            });
+          } else {
+            // Browser: Use HTTP API
+            const response = await fetch(`${API_URL}/api/download`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-token": API_TOKEN,
+              },
+              body: JSON.stringify({
+                url: url,
+                qualityIndex: parseInt(els.quality.value),
+                customFolder: selectedFolder,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.statusText}`);
+            }
+
+            result = await response.json();
+          }
 
           if (result.success) {
             showStatus(`Downloaded: ${result.title}`, "success");
             lastFilePath = result.path;
             els.actions.style.display = "flex";
-            els.url.value = ""; // Clear input to prevent accidental double download
+            els.url.value = "";
           } else {
             showStatus(`Error: ${result.error}`, "error");
           }
@@ -270,20 +310,50 @@
 
       // 3. Open Folder
       els.openBtn.onclick = () => {
-        if (lastFilePath) window.api.openFolder(lastFilePath);
+        if (isElectron && lastFilePath) {
+          window.api.openFolder(lastFilePath);
+        } else {
+          showStatus("File saved to Downloads/MediaDL", "info");
+        }
       };
 
       // 4. Convert MP3
       els.mp3Btn.onclick = async () => {
         if (!lastFilePath) return;
         els.mp3Btn.textContent = "Converting...";
-        const res = await window.api.convertToMp3(lastFilePath);
-        if (res.success) {
-          showStatus("MP3 Extracted successfully!", "success");
-          els.mp3Btn.textContent = "🎵 Convert to MP3";
-        } else {
-          showStatus("MP3 Failed", "error");
+
+        try {
+          let res;
+
+          if (isElectron) {
+            res = await window.api.convertToMp3(lastFilePath);
+          } else {
+            const response = await fetch(`${API_URL}/api/convert-mp3`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-token": API_TOKEN,
+              },
+              body: JSON.stringify({ videoPath: lastFilePath }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.statusText}`);
+            }
+
+            res = await response.json();
+          }
+
+          if (res.success) {
+            showStatus("MP3 Extracted successfully!", "success");
+          } else {
+            showStatus(`MP3 Failed: ${res.error}`, "error");
+          }
+        } catch (e) {
+          showStatus(`Conversion Error: ${e.message}`, "error");
         }
+
+        els.mp3Btn.textContent = "🎵 Convert to MP3";
       };
 
       function showStatus(msg, type) {

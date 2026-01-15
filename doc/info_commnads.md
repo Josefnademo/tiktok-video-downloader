@@ -42,13 +42,13 @@ npx pm2 restart ttd-backend --update-env
 - Start with ecosystem file (development)
 
 ```
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 ```
 
 - Start with ecosystem file (production)
 
 ```
-pm2 start ecosystem.config.js --env production
+pm2 start ecosystem.config.cjs --env production
 ```
 
 - Reload (graceful restart, zero downtime)
