@@ -145,6 +145,13 @@
         color: var(--primary);
       }
 
+      .status-icon {
+        width: 22px;
+        height: 22px;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+
       .actions {
         margin-top: 15px;
         display: flex;
@@ -235,7 +242,7 @@
         if (!url) return showStatus("Please paste a URL first.", "error");
 
         // UI Reset
-        showStatus("⏳ Analyzing & Downloading...", "info");
+        showStatus("Analyzing & Downloading...", "info");
         els.btn.disabled = true;
         els.actions.style.display = "none";
 
@@ -247,15 +254,15 @@
           });
 
           if (result.success) {
-            showStatus(`✅ Downloaded: ${result.title}`, "success");
+            showStatus(`Downloaded: ${result.title}`, "success");
             lastFilePath = result.path;
             els.actions.style.display = "flex";
             els.url.value = ""; // Clear input to prevent accidental double download
           } else {
-            showStatus(`❌ Error: ${result.error}`, "error");
+            showStatus(`Error: ${result.error}`, "error");
           }
         } catch (e) {
-          showStatus(`❌ System Error: ${e.message}`, "error");
+          showStatus(`System Error: ${e.message}`, "error");
         }
 
         els.btn.disabled = false;
@@ -272,17 +279,25 @@
         els.mp3Btn.textContent = "Converting...";
         const res = await window.api.convertToMp3(lastFilePath);
         if (res.success) {
-          showStatus("✅ MP3 Extracted successfully!", "success");
+          showStatus("MP3 Extracted successfully!", "success");
           els.mp3Btn.textContent = "🎵 Convert to MP3";
         } else {
-          showStatus("❌ MP3 Failed", "error");
+          showStatus("MP3 Failed", "error");
         }
       };
 
       function showStatus(msg, type) {
         els.status.style.display = "block";
         els.status.className = "status " + type;
-        els.status.textContent = msg;
+
+        const iconMap = {
+          success: "assets/success.svg",
+          error: "assets/error.svg",
+          info: "assets/info.svg",
+        };
+
+        const icon = iconMap[type] || iconMap.info;
+        els.status.innerHTML = `<img src="${icon}" class="status-icon" alt="${type}"><span>${msg}</span>`;
 
         // Simple styling adjustment based on type
         if (type === "info") {
