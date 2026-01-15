@@ -4,13 +4,33 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "start-server": "node server.js"
   },
   "dependencies": {
+    "dotenv": "^16.1.4",
+    "body-parser": "^2.2.2",
+    "bottleneck": "^2.19.5",
     "electron": "^30.0.0",
+    "express": "^5.2.1",
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2",
-    "node-fetch": "^3.3.2",
-    "m3u8-parser": "^7.1.0"
-  }
+    "m3u8-parser": "^7.1.0",
+    "node-fetch": "^3.3.2"
+  },
+  "description": "> ⚠️ Disclaimer: This project is for **educational purposes only**.  \r > It is not affiliated with or endorsed by TikTok. Downloading and redistributing videos without permission may violate TikTok's Terms of Service.",
+  "directories": {
+    "doc": "doc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Josefnademo/tiktok-video-downloader.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Josefnademo/tiktok-video-downloader/issues"
+  },
+  "homepage": "https://github.com/Josefnademo/tiktok-video-downloader#readme"
 }
