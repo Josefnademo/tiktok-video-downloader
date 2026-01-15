@@ -18,7 +18,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile("index.html");
+  mainWindow.loadFile("public/index.html");
 
   // OPTIONAL: Open DevTools automatically to see frontend logs
   mainWindow.webContents.openDevTools();

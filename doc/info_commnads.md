@@ -1,31 +1,95 @@
-
 ## Commands
 
 - Command for api testing
+
 ```
 curl -L -A "Mozilla/5.0" "api22-normal-c-useast1a.tiktokv.com" -o video.mp4
 ```
+
 - Command for tunneling through cloudflare
+
 ```
 cloudflared tunnel --url http://localhost:3000
 ```
 
 - Command to test the endpoint with token **[PowerShell]**
+
 ```
 $h = @{ "x-api-token"="my_strong_token"; "Content-Type"="application/json" }
 Invoke-RestMethod -Uri "http://localhost:3000/api/download" -Method POST -Headers $h -Body '{"url":"https://example.com/video"}'
 ```
 
 - Command set a new value into env token **[PowerShell]**
+
 ```
 setx API_TOKEN "my_token"
 ```
 
+- Command to start backend from server.js file
+
+```
+pm2 start server.js --name ttd-backend
+```
+
 - Command to restart a service and set a new env value for **pm2**
+
 ```
 npx pm2 restart ttd-backend --update-env
 ```
-##  Used information
+
+## PM2 Production Commands
+
+- Start with ecosystem file (development)
+
+```
+pm2 start ecosystem.config.js
+```
+
+- Start with ecosystem file (production)
+
+```
+pm2 start ecosystem.config.js --env production
+```
+
+- Reload (graceful restart, zero downtime)
+
+```
+pm2 reload ttd-backend
+```
+
+- Stop all PM2 services
+
+```
+pm2 stop all
+```
+
+- Delete process from PM2
+
+```
+pm2 delete ttd-backend
+```
+
+- Save current PM2 state (for autorestart on reboot)
+
+```
+pm2 save
+pm2 startup
+```
+
+- Monitor logs in real-time
+
+```
+pm2 logs ttd-backend
+```
+
+- Show PM2 status
+
+```
+pm2 status
+```
+
+## Used information
+
 - Used api: https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id=...
 
 - Tiktok video for demo: https://www.tiktok.com/@arkhamsorigin/video/7462239608529521950?q=destroy%20arasaka&t=175760085…
