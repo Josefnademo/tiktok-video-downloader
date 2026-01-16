@@ -32,48 +32,6 @@ It works locally on **PC (Windows/Linux/macOS via Electron)** and **Android (via
 
 ---
 
-## Modules Overview
-
-### `downloader.js`
-
-Handles direct downloads:
-
-- Saves video or photo post files locally.
-- Supports resuming (Range headers).
-- Ensures unique filenames.
-
-### `hlsParser.js`
-
-Parses `.m3u8` HLS playlists:
-
-- Detects multiple quality variants.
-- Lets users choose resolution/bitrate.
-- Returns direct stream URLs.
-
-### `audioExtractor.js`
-
-Uses FFmpeg to:
-
-- Extract audio track (`.mp3`) from video.
-- Save in chosen folder.
-
-### `frameExtractor.js`
-
-Uses FFmpeg to:
-
-- Split video into frames (`frame-%d.jpg`).
-- Extract specific photos (from TikTok "photo mode" posts).
-
-### `utils.js`
-
-Helper functions:
-
-- Path management.
-- Filename generation.
-- Logging and error handling.
-
----
-
 ## Installation
 
 ### 💻 Installation (Desktop)
@@ -89,3 +47,63 @@ Helper functions:
     cd tiktok-downloader-app/mobile
     npm install
     npm run android
+
+---
+
+## Deployment
+
+### Local Development (PM2)
+
+Run the backend server locally with PM2 process manager:
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start server with ecosystem config
+pm2 start ecosystem.config.cjs
+
+# View logs
+pm2 logs ttd-backend
+
+# Stop/restart
+pm2 restart ttd-backend
+pm2 stop all
+```
+
+**Features:**
+
+- Auto-restart on crashes
+- Process monitoring
+- Zero-downtime reloads
+- Cluster mode (uses all CPU cores)
+
+### Architecture
+
+```
+┌──────────────────────────────────────┐
+│   Electron Desktop App                │
+│   (npm start)                         │
+│   ├─ Main window                      │
+│   └─ IPC handlers → services          │
+└─────────────┬──────────────────────────┘
+              │
+         Uses locally
+              │
+┌──────────────┴──────────────────────────┐
+│   Backend Server (server.js)             │
+│   ├─ Runs on localhost:3000 (local)     │
+│   ├─ Runs on Railway (cloud)            │
+│   └─ Services:                          │
+│       ├─ tiktok.js (video info)         │
+│       ├─ downloader.js (file transfer)  │
+│       └─ ffmpeg.js (MP3 conversion)     │
+└──────────────────────────────────────────┘
+```
+
+---
+
+## License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.
+**Commercial use of this software is strictly prohibited.**
