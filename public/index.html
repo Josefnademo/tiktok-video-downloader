@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TikTok Downloader Pro</title>
+    <link rel="icon" href="assets/tdd-icon_type2,1.svg" />
     <style>
       :root {
         --bg: #121212;
@@ -169,10 +170,50 @@
       .btn-sm:hover {
         background: #444;
       }
+
+      /* Footer Styling */
+      footer {
+        margin-top: 100px;
+        padding-top: 20px;
+        border-top: 1px solid #333;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+      }
+      footer img {
+        width: 100px;
+        height: 100px;
+        opacity: 0.95;
+        transition: opacity 0.3s ease;
+      }
+      footer img:hover {
+        opacity: 0.8;
+      }
+      footer p {
+        margin: 10px 0 0 0;
+        color: var(--text-gray);
+        font-size: 0.85em;
+        letter-spacing: 0.5px;
+      }
+      footer .footer-links {
+        margin-top: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        font-size: 0.8em;
+      }
+      footer .footer-links a {
+        color: var(--cyan);
+        text-decoration: none;
+        transition: color 0.35s;
+      }
+      footer .footer-links a:hover {
+        color: var(--primary);
+      }
     </style>
   </head>
   <body>
-    <h1>TikTok <span>Downloader</span></h1>
+    <h1>TikTok <span>Downloader Pro</span></h1>
 
     <div class="container">
       <div class="input-group">
@@ -210,6 +251,19 @@
         <button id="mp3Btn" class="btn-sm">🎵 Convert to MP3</button>
       </div>
     </div>
+
+    <footer>
+      <img src="assets/tdd-icon.svg" alt="TDD Icon" />
+      <p>TikTok Downloader Pro</p>
+      <p style="font-size: 0.75em; color: #666; margin-top: 5px">
+        Download your favorite TikTok videos with ease
+      </p>
+      <div class="footer-links">
+        <a href="https://github.com/Josefnademo" target="_blank">GitHub</a>
+        <a href="#">Feedback</a>
+        <a href="#">Report Bug</a>
+      </div>
+    </footer>
 
     <script>
       const els = {
