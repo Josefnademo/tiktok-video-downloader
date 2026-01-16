@@ -25,6 +25,12 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/download" -Method POST -Header
 setx API_TOKEN "my_token"
 ```
 
+- Install PM2 globally
+
+```
+npm install -g pm2
+```
+
 - Command to start backend from server.js file
 
 ```
@@ -106,14 +112,14 @@ pm2 status
 
 ### Steps
 
-1. Go to [railway.app](https://railway.app)
+1. Go to [railway.app](https://railway.app) create Railway account
 2. Click "New Project" → "Deploy from GitHub"
 3. Select `tiktok-video-downloader` repository
 4. Railway auto-detects Node.js and deploys
 5. In Railway Dashboard → Environment Variables:
    - Add `API_TOKEN=your_secure_token`
    - Add `PORT=3000` (optional, Railway sets this automatically)
-6. Deploy automatically starts
+6. Auto Deploy: Push to `main` branch = instant deployment
 7. Your app URL: `https://your-project-name.railway.app`
 
 ### Features for Railway deployment
@@ -123,3 +129,45 @@ pm2 status
 - Auto-restart on crashes
 - GitHub auto-deploy (push to main = instant deploy)
 - Free tier: $5/month credits
+
+## Modules Overview
+
+### `downloader.js`
+
+Handles direct downloads:
+
+- Saves video or photo post files locally.
+- Supports resuming (Range headers).
+- Ensures unique filenames.
+
+### `hlsParser.js`
+
+Parses `.m3u8` HLS playlists:
+
+- Detects multiple quality variants.
+- Lets users choose resolution/bitrate.
+- Returns direct stream URLs.
+
+### `audioExtractor.js`
+
+Uses FFmpeg to:
+
+- Extract audio track (`.mp3`) from video.
+- Save in chosen folder.
+
+### `frameExtractor.js`
+
+Uses FFmpeg to:
+
+- Split video into frames (`frame-%d.jpg`).
+- Extract specific photos (from TikTok "photo mode" posts).
+
+### `utils.js`
+
+Helper functions:
+
+- Path management.
+- Filename generation.
+- Logging and error handling.
+
+---
