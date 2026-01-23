@@ -100,6 +100,13 @@ pm2 status
 npx create-expo-app tiktok-mobile
 cd tiktok-mobile
 npx expo install expo-file-system expo-sharing
+npx expo start
+```
+
+USB testing, Run ADB Reverse(This tells the phone: "If the app looks for localhost:3000, send it to the PC's port 3000"):
+
+```
+adb reverse tcp:3000 tcp:3000
 ```
 
 ## Used information

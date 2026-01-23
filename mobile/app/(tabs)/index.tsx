@@ -7,12 +7,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 // CONFIGURATION
-// Replace with your specific LAN IP Address
+
+// If using USB Cable + adb reverse:
+// const API_URL = "http://localhost:3000";
+
+// If using Wi-Fi (Hotspot)Replace with your specific LAN IP Address:
 const API_URL = "http://10.50.120.24:3000";
 const API_TOKEN = "my_strong_token"; // Must match the token in server.js
 
@@ -22,7 +27,6 @@ export default function HomeScreen() {
   const [status, setStatus] = useState("");
 
   const downloadVideo = async () => {
-    // Validation: Check if URL is empty
     if (!url) {
       Alert.alert("Error", "Please paste a TikTok URL");
       return;
@@ -32,50 +36,90 @@ export default function HomeScreen() {
     setStatus("Processing on server...");
 
     try {
-      // 1. Generate a unique filename for the mobile device
-      const filename = `tiktok_${Date.now()}.mp4`;
-      const fileUri = FileSystem.documentDirectory + filename;
+      const endpoint = `${API_URL}/api/download`;
 
-      // 2. Download the file from YOUR PC server
-      // We hit the /api/download endpoint defined in server.js
-      const downloadRes = await FileSystem.downloadAsync(
-        `${API_URL}/api/download`,
-        fileUri,
-        {
+      // ============================================================
+      // WEB BROWSER LOGIC
+      // ============================================================
+      if (Platform.OS === "web") {
+        const response = await fetch(endpoint, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             "x-api-token": API_TOKEN,
           },
-          httpMethod: "POST",
-          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-          // Sending the request body as a string
           body: JSON.stringify({
             url: url,
             qualityIndex: 0,
-            customFolder: null, // Mobile doesn't use custom paths like Windows
+            customFolder: null,
           }),
-        }
-      );
+        });
 
-      // Check if server returned 200 OK
-      if (downloadRes.status !== 200) {
-        throw new Error("Download failed from server");
+        if (!response.ok) throw new Error("Server returned error");
+
+        // Create a blob and force browser download
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `tiktok_${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setStatus("Download started in browser!");
       }
 
-      setStatus("Done! Opening share dialog...");
+      // ============================================================
+      // MOBILE (ANDROID/IOS) LOGIC
+      // ============================================================
+      else {
+        // 1. Generate filename
+        const filename = `tiktok_${Date.now()}.mp4`;
+        const fileUri = FileSystem.documentDirectory + filename;
 
-      // 3. Open the OS Share Sheet (Save to Gallery / Send to WhatsApp etc.)
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(downloadRes.uri);
-      } else {
-        Alert.alert("Success", "Video saved to app cache");
+        // 2. Fetch the file data manually (since downloadAsync struggles with POST body)
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-token": API_TOKEN,
+          },
+          body: JSON.stringify({
+            url: url,
+            qualityIndex: 0,
+            customFolder: null,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Mobile fetch failed");
+
+        // 3. Convert Blob to Base64 to save it
+        const blob = await response.blob();
+        const reader = new FileReader();
+
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          const base64data = reader.result.split(",")[1];
+
+          // 4. Write file to system
+          await FileSystem.writeAsStringAsync(fileUri, base64data, {
+            encoding: "base64", // <--- FIXED: Use string directly
+          });
+
+          setStatus("Done! Opening share dialog...");
+
+          // 5. Share
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(fileUri);
+          } else {
+            Alert.alert("Success", "Video saved to app cache");
+          }
+        };
       }
     } catch (error) {
       console.error(error);
-      Alert.alert(
-        "Connection Error",
-        "Could not reach server. Check if PC and Phone are on the same WiFi."
-      );
+      Alert.alert("Error", "Download failed. Check server connection.");
       setStatus("Error");
     } finally {
       setLoading(false);
@@ -116,11 +160,11 @@ export default function HomeScreen() {
   );
 }
 
-// STYLES (Based on your dark theme: #121212)
+// STYLES
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212", // --bg
+    backgroundColor: "#121212",
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
@@ -128,22 +172,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#ffffff", // --text
+    color: "#ffffff",
     marginBottom: 30,
   },
   titleSpan: {
-    color: "#fe2c55", // --primary (TikTok Red)
+    color: "#fe2c55",
   },
   card: {
     width: "100%",
-    backgroundColor: "#1e1e1e", // --card
+    backgroundColor: "#1e1e1e",
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#333",
+    maxWidth: 500, // Limit width on Web
   },
   label: {
-    color: "#a0a0a0", // --text-gray
+    color: "#a0a0a0",
     marginBottom: 10,
   },
   input: {
@@ -154,15 +199,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#333",
     marginBottom: 20,
+    outlineStyle: "none", // Remove blue border on Web
   },
   button: {
-    backgroundColor: "#fe2c55", // --primary
+    backgroundColor: "#fe2c55",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
+    cursor: "pointer", // Show hand cursor on Web
   },
   buttonDisabled: {
     backgroundColor: "#444",
+    cursor: "default",
   },
   buttonText: {
     color: "#ffffff",
@@ -171,7 +219,7 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 15,
-    color: "#25f4ee", // --cyan
+    color: "#25f4ee",
     textAlign: "center",
   },
 });

@@ -1,5 +1,6 @@
 // server.js (ES Module)
 import express from "express";
+import cors from "cors";
 import Bottleneck from "bottleneck";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
@@ -9,6 +10,7 @@ import { extractMp3 } from "./src/services/ffmpeg.js";
 
 dotenv.config();
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 // Serve static frontend from ./public
