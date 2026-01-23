@@ -94,6 +94,14 @@ pm2 logs ttd-backend
 pm2 status
 ```
 
+## Expo Go Commands
+
+```
+npx create-expo-app tiktok-mobile
+cd tiktok-mobile
+npx expo install expo-file-system expo-sharing
+```
+
 ## Used information
 
 - Used api: https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id=...
