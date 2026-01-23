@@ -255,7 +255,7 @@ try {
         default {
             Write-Log "Unknown command: $Command" "Error"
             Write-Host ""
-            Write-Host "Usage: .\script.ps1 -Command <command>" -ForegroundColor Yellow
+            Write-Host "Usage: .\script.ps1 -Command [command]" -ForegroundColor Yellow
             Write-Host ""
             Write-Host "Available commands:" -ForegroundColor Yellow
             Write-Host "  install           - Install dependencies" -ForegroundColor Gray
