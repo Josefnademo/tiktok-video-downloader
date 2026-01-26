@@ -9,17 +9,18 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
+// --- Important change: added '/legacy' ---
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 
 // CONFIGURATION
 
-// If using USB Cable + adb reverse:
+// Via USB cable (adb reverse tcp:3000 tcp:3000):
 // const API_URL = "http://localhost:3000";
 
-// If using Wi-Fi (Hotspot)Replace with your specific LAN IP Address:
+// Via Wi-Fi (your IP):
 const API_URL = "http://10.50.120.24:3000";
-const API_TOKEN = "my_strong_token"; // Must match the token in server.js
+const API_TOKEN = "my_strong_token";
 
 export default function HomeScreen() {
   const [url, setUrl] = useState("");
@@ -57,7 +58,6 @@ export default function HomeScreen() {
 
         if (!response.ok) throw new Error("Server returned error");
 
-        // Create a blob and force browser download
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -74,11 +74,9 @@ export default function HomeScreen() {
       // MOBILE (ANDROID/IOS) LOGIC
       // ============================================================
       else {
-        // 1. Generate filename
         const filename = `tiktok_${Date.now()}.mp4`;
         const fileUri = FileSystem.documentDirectory + filename;
 
-        // 2. Fetch the file data manually (since downloadAsync struggles with POST body)
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -92,9 +90,9 @@ export default function HomeScreen() {
           }),
         });
 
-        if (!response.ok) throw new Error("Mobile fetch failed");
+        if (!response.ok)
+          throw new Error(`Mobile fetch failed: ${response.status}`);
 
-        // 3. Convert Blob to Base64 to save it
         const blob = await response.blob();
         const reader = new FileReader();
 
@@ -102,14 +100,13 @@ export default function HomeScreen() {
         reader.onloadend = async () => {
           const base64data = reader.result.split(",")[1];
 
-          // 4. Write file to system
+          // Теперь это будет работать благодаря импорту 'expo-file-system/legacy'
           await FileSystem.writeAsStringAsync(fileUri, base64data, {
-            encoding: "base64", // <--- FIXED: Use string directly
+            encoding: "base64",
           });
 
           setStatus("Done! Opening share dialog...");
 
-          // 5. Share
           if (await Sharing.isAvailableAsync()) {
             await Sharing.shareAsync(fileUri);
           } else {
@@ -119,7 +116,7 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Download failed. Check server connection.");
+      Alert.alert("Error", `Download failed: ${error.message}`);
       setStatus("Error");
     } finally {
       setLoading(false);
@@ -185,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#333",
-    maxWidth: 500, // Limit width on Web
+    maxWidth: 500,
   },
   label: {
     color: "#a0a0a0",
@@ -199,14 +196,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#333",
     marginBottom: 20,
-    outlineStyle: "none", // Remove blue border on Web
+    outlineStyle: "none",
   },
   button: {
     backgroundColor: "#fe2c55",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
-    cursor: "pointer", // Show hand cursor on Web
+    cursor: "pointer",
   },
   buttonDisabled: {
     backgroundColor: "#444",
