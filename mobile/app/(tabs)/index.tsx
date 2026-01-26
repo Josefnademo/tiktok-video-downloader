@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Linking, // import for opening links
+  ScrollView, // import for scrolling
+  Image, // import for icons
 } from "react-native";
 // --- Important change: added '/legacy' ---
 import * as FileSystem from "expo-file-system/legacy";
@@ -100,7 +103,6 @@ export default function HomeScreen() {
         reader.onloadend = async () => {
           const base64data = reader.result.split(",")[1];
 
-          // Теперь это будет работать благодаря импорту 'expo-file-system/legacy'
           await FileSystem.writeAsStringAsync(fileUri, base64data, {
             encoding: "base64",
           });
@@ -123,54 +125,119 @@ export default function HomeScreen() {
     }
   };
 
+  const openLink = (url) => {
+    Linking.openURL(url).catch((err) =>
+      console.error("Couldn't load page", err),
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        TikTok <Text style={styles.titleSpan}>Downloader</Text>
-      </Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        {/* Wrapper for Main Content to keep it centered vertically */}
+        <View style={styles.mainContent}>
+          <Text style={styles.title}>
+            TikTok <Text style={styles.titleSpan}>Downloader</Text>
+          </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>TikTok URL</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Paste link here..."
-          placeholderTextColor="#666"
-          value={url}
-          onChangeText={setUrl}
-        />
+          <View style={styles.card}>
+            <Text style={styles.label}>TikTok URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Paste link here..."
+              placeholderTextColor="#666"
+              value={url}
+              onChangeText={setUrl}
+            />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={downloadVideo}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Download Video</Text>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={downloadVideo}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Download Video</Text>
+              )}
+            </TouchableOpacity>
 
-        {status ? <Text style={styles.status}>{status}</Text> : null}
+            {status ? <Text style={styles.status}>{status}</Text> : null}
+          </View>
+        </View>
+
+        {/* --- FOOTER START --- */}
+        <View style={styles.footer}>
+          {
+            <Image
+              source={require("../../assets/tdd-icon.svg")}
+              style={styles.footerIcon}
+            />
+            /* <Image
+              source={require("../../assets/tiktok.png")}
+              style={styles.footerIcon}
+            />*/
+          }
+
+          <Text style={styles.footerTitle}>TikTok Downloader Pro</Text>
+          <Text style={styles.footerSubtitle}>
+            Download your favorite TikTok videos with ease
+          </Text>
+
+          <View style={styles.footerLinks}>
+            <TouchableOpacity
+              onPress={() => openLink("https://github.com/Josefnademo")}
+            >
+              <Text style={styles.linkText}>GitHub</Text>
+            </TouchableOpacity>
+            <Text style={styles.linkSeparator}>•</Text>
+            <TouchableOpacity
+              onPress={() => openLink("https://github.com/Josefnademo")}
+            >
+              <Text style={styles.linkText}>Feedback</Text>
+            </TouchableOpacity>
+            <Text style={styles.linkSeparator}>•</Text>
+            <TouchableOpacity
+              onPress={() => openLink("https://github.com/Josefnademo")}
+            >
+              <Text style={styles.linkText}>Report Bug</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* --- FOOTER END --- */}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 // STYLES
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#121212",
+  },
   container: {
     flex: 1,
     backgroundColor: "#121212",
+    // CHANGED: 'space-between' pushes content to top and footer to bottom
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    minHeight: "100%",
+  },
+  // NEW: Wrapper to keep the card centered visually in the top space
+  mainContent: {
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    flex: 1, // Takes up all available space, pushing footer down
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     color: "#ffffff",
     marginBottom: 30,
+    marginTop: 20,
   },
   titleSpan: {
     color: "#fe2c55",
@@ -218,5 +285,46 @@ const styles = StyleSheet.create({
     marginTop: 15,
     color: "#25f4ee",
     textAlign: "center",
+  },
+
+  // --- Footer Styles ---
+  footer: {
+    marginTop: 30,
+    paddingTop: 20,
+    paddingBottom: 20, // Added padding at bottom for phones with notches
+    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    alignItems: "center",
+  },
+  footerIcon: {
+    width: 60,
+    height: 60,
+    marginBottom: 10,
+    opacity: 0.9,
+  },
+  footerTitle: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  footerSubtitle: {
+    color: "#666",
+    fontSize: 12,
+    marginTop: 5,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  footerLinks: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  linkText: {
+    color: "#25f4ee",
+    fontSize: 13,
+  },
+  linkSeparator: {
+    color: "#444",
   },
 });
