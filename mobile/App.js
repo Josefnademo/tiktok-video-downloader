@@ -55,7 +55,7 @@ export default function App() {
             qualityIndex: 0,
             customFolder: null, // Mobile doesn't use custom paths like Windows
           }),
-        }
+        },
       );
 
       // Check if server returned 200 OK
@@ -75,7 +75,7 @@ export default function App() {
       console.error(error);
       Alert.alert(
         "Connection Error",
-        "Could not reach server. Check if PC and Phone are on the same WiFi."
+        "Could not reach server. Check if PC and Phone are on the same WiFi.",
       );
       setStatus("Error");
     } finally {

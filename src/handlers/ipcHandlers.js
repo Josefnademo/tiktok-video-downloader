@@ -1,5 +1,6 @@
 import { ipcMain, dialog, shell } from "electron";
 import { getVideoInfo } from "../services/tiktok.js";
+//import { getVideoInfo } from "../services/tiktok_Tikwm.js";
 import { downloadFile } from "../services/downloader.js";
 import { extractMp3 } from "../services/ffmpeg.js";
 
@@ -35,7 +36,7 @@ export function setupHandlers() {
         // This prevents accidental double-clicks and "Too Many Requests" loops.
         if (lastDownloadedId === videoData.id) {
           throw new Error(
-            "You just downloaded this video! Please download a different one first to avoid API bans."
+            "You just downloaded this video! Please download a different one first to avoid API bans.",
           );
         }
 
@@ -62,7 +63,7 @@ export function setupHandlers() {
         console.error("[IPC] Error:", error.message);
         return { success: false, error: error.message };
       }
-    }
+    },
   );
 
   // --- Handler: MP3 ---

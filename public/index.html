@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -293,7 +293,7 @@
 
         // Hide the label for folder path
         const folderLabel = document.querySelector(
-          ".input-group:has(#folderPath) > label"
+          ".input-group:has(#folderPath) > label",
         );
         if (folderLabel) folderLabel.style.display = "none";
       }
@@ -312,13 +312,14 @@
             // Browser: Just show a text field message
             showStatus(
               "In browser mode, files save to Downloads/MediaDL folder",
-              "info"
+              "info",
             );
             selectedFolder = null;
           }
         };
       }
 
+      // 2. Download Logic
       // 2. Download Logic
       els.btn.onclick = async () => {
         const url = els.url.value.trim();
@@ -354,23 +355,33 @@
               }),
             });
 
+            // --- ИСПРАВЛЕНИЕ: Сначала проверяем на ошибки ---
             if (!response.ok) {
-              const error = await response.json();
-              throw new Error(error.error || response.statusText);
+              const errorJson = await response.json();
+              throw new Error(
+                errorJson.error || `Server Error: ${response.status}`,
+              );
             }
 
-            // Check if it's a video stream or JSON response
+            // Проверяем, это видео или JSON (на всякий случай)
             const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("video")) {
-              // It's a video file - stream it to user's download
-              const blob = await response.blob();
-              const filename =
-                response.headers
-                  .get("content-disposition")
-                  .split("filename=")[1]
-                  .replace(/"/g, "") || "tiktok-video.mp4";
 
-              // Create download link
+            if (contentType && contentType.includes("application/json")) {
+              // Если сервер вернул JSON (успех без файла, странно, но возможно)
+              result = await response.json();
+            } else {
+              // Это видео файл (blob)
+              const blob = await response.blob();
+
+              // --- ИСПРАВЛЕНИЕ: Безопасное получение имени файла ---
+              const disposition = response.headers.get("content-disposition");
+              let filename = `tiktok_${Date.now()}.mp4`;
+
+              if (disposition && disposition.includes("filename=")) {
+                filename = disposition.split("filename=")[1].replace(/"/g, "");
+              }
+
+              // Скачивание в браузере
               const downloadUrl = window.URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = downloadUrl;
@@ -385,25 +396,22 @@
                 title: filename,
                 path: filename,
               };
-            } else {
-              // It's JSON
-              result = await response.json();
             }
           }
 
           if (result && result.success) {
             showStatus(`Downloaded: ${result.title}`, "success");
             lastFilePath = result.path;
-            // Show action buttons only in Electron
             if (isElectron) {
               els.actions.style.display = "flex";
             }
             els.url.value = "";
           } else {
-            showStatus(`Error: ${result?.error || "Unknown error"}`, "error");
+            // Если Electron вернул success: false
+            throw new Error(result?.error || "Unknown error");
           }
         } catch (e) {
-          showStatus(`System Error: ${e.message}`, "error");
+          showStatus(`${e.message}`, "error");
         }
 
         els.btn.disabled = false;
@@ -416,7 +424,7 @@
         } else {
           showStatus(
             "This feature is only available in the Electron app",
-            "info"
+            "info",
           );
         }
       };
@@ -426,7 +434,7 @@
         if (!isElectron) {
           showStatus(
             "MP3 conversion is only available in the Electron app",
-            "info"
+            "info",
           );
           return;
         }
