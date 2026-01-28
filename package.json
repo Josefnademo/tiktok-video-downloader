@@ -12,7 +12,6 @@
     "bottleneck": "^2.19.5",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
-    "electron": "^30.0.0",
     "express": "^5.2.1",
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2",
@@ -23,9 +22,6 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "description": "> ⚠️ Disclaimer: This project is for **educational purposes only**.  \r > It is not affiliated with or endorsed by TikTok. Downloading and redistributing videos without permission may violate TikTok's Terms of Service.",
-  "directories": {
-    "doc": "doc"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Josefnademo/tiktok-video-downloader.git"
@@ -36,5 +32,39 @@
   "bugs": {
     "url": "https://github.com/Josefnademo/tiktok-video-downloader/issues"
   },
-  "homepage": "https://github.com/Josefnademo/tiktok-video-downloader#readme"
+  "homepage": "https://github.com/Josefnademo/tiktok-video-downloader#readme",
+  "devDependencies": {
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0"
+  },
+  "build": {
+    "appId": "com.tiktok-downloader.app",
+    "productName": "TikTok Video Downloader",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "public/**/*",
+      "src/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/assets/icon.png"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**",
+      "node_modules/ffprobe-static/**"
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true
+    }
+  }
 }

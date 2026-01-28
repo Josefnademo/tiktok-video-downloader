@@ -2,6 +2,8 @@ import { app, BrowserWindow } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setupHandlers } from "./src/handlers/ipcHandlers.js";
+// IMPORT THE SERVER SO IT STARTS WITH THE APPLICATION
+import "./server.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,19 +18,20 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+
+    autoHideMenuBar: true,
   });
 
   mainWindow.loadFile("public/index.html");
 
-  // OPTIONAL: Open DevTools automatically to see frontend logs
-  mainWindow.webContents.openDevTools();
+  // Uncomment this line if you want to see errors (console on the right)
+  // mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
-  // Register IPC handlers BEFORE creating window
   setupHandlers();
   createWindow();
-  console.log("✅ App started. Ready to process requests.");
+  console.log("✅ App started with internal server.");
 });
 
 app.on("window-all-closed", () => {

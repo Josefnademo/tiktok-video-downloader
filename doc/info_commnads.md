@@ -109,6 +109,12 @@ USB testing, Run ADB Reverse(This tells the phone: "If the app looks for localho
 adb reverse tcp:3000 tcp:3000
 ```
 
+## Build App .exe on Electron
+
+```
+npx electron-builder --win
+```
+
 ## Used information
 
 - Used api: https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id=...
