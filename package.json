@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "electron .",
-    "start-server": "node server.js"
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux AppImage",
+    "build:mac": "electron-builder --mac"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
