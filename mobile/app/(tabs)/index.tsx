@@ -8,27 +8,45 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Linking, // import for opening links
-  ScrollView, // import for scrolling
-  Image, // import for icons
+  Linking,
+  ScrollView,
+  Image,
 } from "react-native";
-// --- Important change: added '/legacy' ---
+
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-
-// CONFIGURATION
-
-// Via USB cable (adb reverse tcp:3000 tcp:3000):
-// const API_URL = "http://localhost:3000";
-
-// Via Wi-Fi (your IP):
-const API_URL = "http://10.50.120.24:3000";
-const API_TOKEN = "my_strong_token";
 
 export default function HomeScreen() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+
+  // --- logic without server---
+  const getVideoDirectly = async (tiktokUrl) => {
+    try {
+      const cleanUrl = tiktokUrl.split("?")[0];
+
+      const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(cleanUrl)}`;
+
+      const response = await fetch(apiUrl);
+      const json = await response.json();
+
+      if (json.code !== 0) {
+        throw new Error(json.msg || "Error fetching video info");
+      }
+
+      const videoData = json.data;
+      const downloadUrl = videoData.hdplay || videoData.play;
+
+      return {
+        downloadUrl: downloadUrl,
+        id: videoData.id,
+        title: videoData.title || "video",
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const downloadVideo = async () => {
     if (!url) {
@@ -37,96 +55,48 @@ export default function HomeScreen() {
     }
 
     setLoading(true);
-    setStatus("Processing on server...");
+    setStatus("Analyzing video...");
 
     try {
-      const endpoint = `${API_URL}/api/download`;
+      const videoInfo = await getVideoDirectly(url);
 
-      // ============================================================
-      // WEB BROWSER LOGIC
-      // ============================================================
+      setStatus("Downloading...");
+
       if (Platform.OS === "web") {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-token": API_TOKEN,
-          },
-          body: JSON.stringify({
-            url: url,
-            qualityIndex: 0,
-            customFolder: null,
-          }),
-        });
-
-        if (!response.ok) throw new Error("Server returned error");
-
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = downloadUrl;
-        a.download = `tiktok_${Date.now()}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        setStatus("Download started in browser!");
-      }
-
-      // ============================================================
-      // MOBILE (ANDROID/IOS) LOGIC
-      // ============================================================
-      else {
-        const filename = `tiktok_${Date.now()}.mp4`;
+        window.open(videoInfo.downloadUrl, "_blank");
+        setStatus("Opened in new tab!");
+      } else {
+        const filename = `tiktok_${videoInfo.id}.mp4`;
         const fileUri = FileSystem.documentDirectory + filename;
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-token": API_TOKEN,
-          },
-          body: JSON.stringify({
-            url: url,
-            qualityIndex: 0,
-            customFolder: null,
-          }),
-        });
+        const downloadRes = await FileSystem.downloadAsync(
+          videoInfo.downloadUrl,
+          fileUri,
+        );
 
-        if (!response.ok)
-          throw new Error(`Mobile fetch failed: ${response.status}`);
+        if (downloadRes.status !== 200) {
+          throw new Error("Failed to download video file");
+        }
 
-        const blob = await response.blob();
-        const reader = new FileReader();
+        setStatus("Done! Opening share dialog...");
 
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-          const base64data = reader.result.split(",")[1];
-
-          await FileSystem.writeAsStringAsync(fileUri, base64data, {
-            encoding: "base64",
-          });
-
-          setStatus("Done! Opening share dialog...");
-
-          if (await Sharing.isAvailableAsync()) {
-            await Sharing.shareAsync(fileUri);
-          } else {
-            Alert.alert("Success", "Video saved to app cache");
-          }
-        };
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri);
+        } else {
+          Alert.alert("Success", "Video saved locally!");
+        }
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", `Download failed: ${error.message}`);
+      Alert.alert("Error", `Failed: ${error.message}`);
       setStatus("Error");
     } finally {
       setLoading(false);
     }
   };
 
-  const openLink = (url) => {
-    Linking.openURL(url).catch((err) =>
+  const openLink = (link) => {
+    Linking.openURL(link).catch((err) =>
       console.error("Couldn't load page", err),
     );
   };
@@ -134,10 +104,9 @@ export default function HomeScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        {/* Wrapper for Main Content to keep it centered vertically */}
         <View style={styles.mainContent}>
           <Text style={styles.title}>
-            TikTok <Text style={styles.titleSpan}>Downloader</Text>
+            TikTok <Text style={styles.titleSpan}>Mobile</Text>
           </Text>
 
           <View style={styles.card}>
@@ -166,45 +135,17 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* --- FOOTER START --- */}
+        {/* FOOTER */}
         <View style={styles.footer}>
-          {
-            <Image
-              source={require("../../assets/tdd-icon.svg")}
-              style={styles.footerIcon}
-            />
-            /* <Image
-              source={require("../../assets/tiktok.png")}
-              style={styles.footerIcon}
-            />*/
-          }
-
-          <Text style={styles.footerTitle}>TikTok Downloader Pro</Text>
-          <Text style={styles.footerSubtitle}>
-            Download your favorite TikTok videos with ease
-          </Text>
-
+          <Text style={styles.footerTitle}>TikTok Downloader Mobile</Text>
           <View style={styles.footerLinks}>
             <TouchableOpacity
               onPress={() => openLink("https://github.com/Josefnademo")}
             >
               <Text style={styles.linkText}>GitHub</Text>
             </TouchableOpacity>
-            <Text style={styles.linkSeparator}>•</Text>
-            <TouchableOpacity
-              onPress={() => openLink("https://github.com/Josefnademo")}
-            >
-              <Text style={styles.linkText}>Feedback</Text>
-            </TouchableOpacity>
-            <Text style={styles.linkSeparator}>•</Text>
-            <TouchableOpacity
-              onPress={() => openLink("https://github.com/Josefnademo")}
-            >
-              <Text style={styles.linkText}>Report Bug</Text>
-            </TouchableOpacity>
           </View>
         </View>
-        {/* --- FOOTER END --- */}
       </View>
     </ScrollView>
   );
@@ -212,25 +153,20 @@ export default function HomeScreen() {
 
 // STYLES
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: "#121212",
-  },
+  scrollContainer: { flexGrow: 1, backgroundColor: "#121212" },
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    // CHANGED: 'space-between' pushes content to top and footer to bottom
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
     minHeight: "100%",
   },
-  // NEW: Wrapper to keep the card centered visually in the top space
   mainContent: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    flex: 1, // Takes up all available space, pushing footer down
+    flex: 1,
   },
   title: {
     fontSize: 32,
@@ -239,9 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     marginTop: 20,
   },
-  titleSpan: {
-    color: "#fe2c55",
-  },
+  titleSpan: { color: "#fe2c55" },
   card: {
     width: "100%",
     backgroundColor: "#1e1e1e",
@@ -251,10 +185,7 @@ const styles = StyleSheet.create({
     borderColor: "#333",
     maxWidth: 500,
   },
-  label: {
-    color: "#a0a0a0",
-    marginBottom: 10,
-  },
+  label: { color: "#a0a0a0", marginBottom: 10 },
   input: {
     backgroundColor: "#2a2a2a",
     color: "#ffffff",
@@ -270,61 +201,25 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
-    cursor: "pointer",
   },
-  buttonDisabled: {
-    backgroundColor: "#444",
-    cursor: "default",
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  status: {
-    marginTop: 15,
-    color: "#25f4ee",
-    textAlign: "center",
-  },
-
-  // --- Footer Styles ---
+  buttonDisabled: { backgroundColor: "#444" },
+  buttonText: { color: "#ffffff", fontWeight: "bold", fontSize: 16 },
+  status: { marginTop: 15, color: "#25f4ee", textAlign: "center" },
   footer: {
     marginTop: 30,
     paddingTop: 20,
-    paddingBottom: 20, // Added padding at bottom for phones with notches
+    paddingBottom: 20,
     width: "100%",
     borderTopWidth: 1,
     borderTopColor: "#333",
     alignItems: "center",
   },
-  footerIcon: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
-    opacity: 0.9,
-  },
   footerTitle: {
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+    marginBottom: 10,
   },
-  footerSubtitle: {
-    color: "#666",
-    fontSize: 12,
-    marginTop: 5,
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  footerLinks: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  linkText: {
-    color: "#25f4ee",
-    fontSize: 13,
-  },
-  linkSeparator: {
-    color: "#444",
-  },
+  footerLinks: { flexDirection: "row", alignItems: "center", gap: 10 },
+  linkText: { color: "#25f4ee", fontSize: 13 },
 });
