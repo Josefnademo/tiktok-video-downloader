@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,8 +10,10 @@ import {
   Platform,
   Linking,
   ScrollView,
-  Modal, // <-- Для всплывающего окна
+  Modal,
   Image,
+  Animated,
+  Easing,
 } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -23,22 +25,57 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
-  // --- ЛОГИКА БАННЕРА ---
-  const [showBanner, setShowBanner] = useState(true); // show banner on app start
-  const [bannerTimer, setBannerTimer] = useState(4); // timer 4 sec
+  // --- BANNER LOGIC ---
+  const [showBanner, setShowBanner] = useState(true); // Show banner on app start
+  const [bannerTimer, setBannerTimer] = useState(4); // Countdown in seconds
+  // --- ANIMATION VALUES ---
+  const fadeAnim = useState(new Animated.Value(0))[0]; // opacity
+  const scaleAnim = useState(new Animated.Value(0.85))[0]; // zoom
+  const glowAnim = useState(new Animated.Value(0))[0]; // blinking glow
 
-  // Запускаем таймер при открытии приложения
+  // --- BANNER APPEAR + EFFECTS ---
   useEffect(() => {
-    if (showBanner && bannerTimer > 0) {
-      const timerId = setTimeout(() => {
-        setBannerTimer(bannerTimer - 1);
-      }, 1000);
-      return () => clearTimeout(timerId);
+    if (!showBanner) return;
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.exp),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [showBanner]);
+
+  useEffect(() => {
+    if (!showBanner) return;
+    if (bannerTimer === 0) {
+      closeBanner();
+      return;
     }
-  }, [showBanner, bannerTimer]);
+    const timerId = setTimeout(() => setBannerTimer((prev) => prev - 1), 1000);
+    return () => clearTimeout(timerId);
+  }, [bannerTimer, showBanner]);
 
   const closeBanner = () => {
-    setShowBanner(false);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.9,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowBanner(false));
   };
 
   // --- ЛОГИКА СКАЧИВАНИЯ ---
@@ -99,25 +136,60 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* --- POP-UP BANNER (AliExpress Style) --- */}
+      {/* --- POP-UP BANNER --- */}
       <Modal
-        animationType="fade"
+        animationType="none"
         transparent={true}
         visible={showBanner}
-        onRequestClose={() => {}} // Блокируем кнопку "Назад" на Андроиде пока идет таймер
+        onRequestClose={() => {}}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.bannerContainer}>
-            <View style={styles.bannerImagePlaceholder}>
+          <Animated.View
+            style={[
+              styles.bannerContainer,
               {
-                <Image
-                  source={require("../assets/ad.jpg")}
-                  style={styles.realBannerImage}
-                />
-              }
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+
+                // 1. Анимация цвета тени (Только для iOS)
+                shadowColor:
+                  Platform.OS === "ios"
+                    ? glowAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["#000", "#fe2c55"],
+                      })
+                    : "#000",
+
+                // 2. Анимация радиуса тени (Только для iOS)
+                shadowRadius:
+                  Platform.OS === "ios"
+                    ? glowAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [10, 20],
+                      })
+                    : 10,
+
+                // 3. Elevation для Android должен быть СТАТИЧНЫМ (не анимированным), иначе краш
+                elevation: 10,
+
+                // 4. ХИТРОСТЬ: Анимируем цвет рамки (работает и на Android, выглядит как свечение)
+                borderWidth: 2,
+                borderColor: glowAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["transparent", "#fe2c55"], // От прозрачного к красному
+                }),
+              },
+            ]}
+          >
+            <View style={styles.bannerImagePlaceholder}>
+              <Image
+                source={require("../assets/ad.jpg")}
+                style={styles.realBannerImage}
+                resizeMode="cover"
+              />
             </View>
 
-            {/* Timer and cross */}
+            {/* Timer / Close button */}
             <View style={styles.closeButtonContainer}>
               {bannerTimer > 0 ? (
                 <View style={styles.timerCircle}>
@@ -132,7 +204,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               )}
             </View>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
