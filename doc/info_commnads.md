@@ -109,10 +109,14 @@ USB testing, Run ADB Reverse(This tells the phone: "If the app looks for localho
 adb reverse tcp:3000 tcp:3000
 ```
 
-## Build App .exe on Electron
+## Build App via Electron
+
+Windows/Linux/macOS commands for deploy
 
 ```
 npx electron-builder --win
+electron-builder --linux AppImage
+electron-builder --mac
 ```
 
 ## Used information
